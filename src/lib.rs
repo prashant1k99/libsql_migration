@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 use errors::LibsqlMigratorError;
 use libsql::Connection;
@@ -27,14 +30,47 @@ fn validate_migration_folder(path: &Path) -> Result<(), LibsqlMigratorError> {
     }
 }
 
+fn check_dir_for_sql_files(root_path: PathBuf) -> Result<Vec<PathBuf>, io::Error> {
+    let mut file_paths: Vec<PathBuf> = vec![];
+    let mut path_to_visit: Vec<PathBuf> = vec![root_path];
+
+    while let Some(current_path) = path_to_visit.pop() {
+        if current_path.is_dir() {
+            for entry in fs::read_dir(current_path)? {
+                let entry_path = entry?.path();
+                path_to_visit.push(entry_path);
+            }
+        } else if current_path.is_file() && current_path.extension().is_some_and(|ext| ext == "sql")
+        {
+            file_paths.push(current_path);
+        }
+    }
+
+    file_paths.sort_by(|a, b| {
+        let a_name = a.file_name().unwrap_or_default();
+        let b_name = b.file_name().unwrap_or_default();
+        a_name.cmp(b_name)
+    });
+
+    Ok(file_paths)
+}
+
 pub async fn migrate(
-    conn: Connection,
+    conn: &Connection,
     migrations_folder: PathBuf,
-) -> Result<(), errors::LibsqlMigratorError> {
+) -> Result<bool, errors::LibsqlMigratorError> {
     validate_migration_folder(&migrations_folder)?;
 
-    create_migration_table(&conn).await?;
+    create_migration_table(conn).await?;
 
-    // get all the .sql file
-    Ok(())
+    let files_to_run = check_dir_for_sql_files(migrations_folder)
+        .map_err(|e| LibsqlMigratorError::ErrorWhileGettingSQLFiles(e.to_string()))?;
+
+    files_to_run.iter().for_each(|file| {
+        // Add record to db for migration
+        println!("File: {:?}", file.file_name());
+        println!("Filepath: {:?}", file.as_path())
+    });
+
+    Ok(true)
 }

@@ -12,6 +12,7 @@ pub enum LibsqlMigratorError {
     MigrationFailed(String),
     MigrationDirNotFound(PathBuf),
     InvalidMigrationPath(PathBuf),
+    ErrorWhileGettingSQLFiles(String),
 }
 
 impl Display for LibsqlMigratorError {
@@ -35,6 +36,11 @@ impl Display for LibsqlMigratorError {
                     path.to_string_lossy()
                 )
             }
+            LibsqlMigratorError::ErrorWhileGettingSQLFiles(msg) => write!(
+                f,
+                "LibsqlMigratorError: Error occured while traversing migration folder | {}",
+                msg
+            ),
         }
     }
 }
