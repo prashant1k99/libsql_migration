@@ -108,6 +108,12 @@ mod migration_tests {
 
             migrate(&conn, temp_dir.into_path()).await?;
 
+            let mut rows = conn.query("SELECT * from libsql_migrations", ()).await?;
+
+            while let Some(row) = rows.next().await? {
+                println!("Row: {:?}", row);
+            }
+
             Ok(())
         }
     }

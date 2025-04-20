@@ -63,14 +63,18 @@ pub async fn migrate(
 
     create_migration_table(conn).await?;
 
-    let files_to_run = check_dir_for_sql_files(migrations_folder)
+    let files_to_run = check_dir_for_sql_files(migrations_folder.clone())
         .map_err(|e| LibsqlMigratorError::ErrorWhileGettingSQLFiles(e.to_string()))?;
 
-    files_to_run.iter().for_each(|file| {
-        // Add record to db for migration
-        println!("File: {:?}", file.file_name());
-        println!("Filepath: {:?}", file.as_path())
-    });
+    for file in files_to_run {
+        let file_id = file.strip_prefix(&migrations_folder).unwrap();
+
+        conn.execute(
+            "INSERT INTO libsql_migrations (id) VALUES (?) ON CONFLICT(id) DO NOTHING",
+            libsql::params![file_id.to_str()],
+        )
+        .await?;
+    }
 
     Ok(true)
 }
