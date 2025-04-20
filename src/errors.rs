@@ -19,7 +19,9 @@ impl Display for LibsqlMigratorError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             LibsqlMigratorError::LibSqlError(e) => write!(f, "LibSqlError: {}", e),
-            LibsqlMigratorError::MigrationFailed(msg) => write!(f, "LibsqlMigrationError: {}", msg),
+            LibsqlMigratorError::MigrationFailed(msg) => {
+                write!(f, "LibsqlMigrationError: Migration failed | {}", msg)
+            }
             LibsqlMigratorError::MigrationFolderAlreadyInit => {
                 write!(f, "LibsqlMigratorError: Migration Dir already initialized")
             }
@@ -30,9 +32,15 @@ impl Display for LibsqlMigratorError {
                     path.to_string_lossy()
                 )
             }
-            LibsqlMigratorError::CustomError(e) => write!(f, "LibsqlMigrationError custom: {}", e),
+            LibsqlMigratorError::CustomError(e) => write!(f, "LibsqlMigrationError: {}", e),
         }
     }
 }
 
 impl Error for LibsqlMigratorError {}
+
+impl From<LibsqlError> for LibsqlMigratorError {
+    fn from(value: LibsqlError) -> Self {
+        LibsqlMigratorError::LibSqlError(value)
+    }
+}
