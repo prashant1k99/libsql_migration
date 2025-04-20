@@ -21,9 +21,9 @@ fn validate_migration_folder(path: &Path) -> Result<(), LibsqlMigratorError> {
     if path.is_dir() || (path.is_file() && path.extension().unwrap_or_default() == "sql") {
         Ok(())
     } else {
-        Err(LibsqlMigratorError::CustomError(String::from(
-            "Invalid migration file",
-        )))
+        Err(LibsqlMigratorError::InvalidMigrationPath(
+            path.to_path_buf(),
+        ))
     }
 }
 

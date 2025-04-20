@@ -11,8 +11,7 @@ pub enum LibsqlMigratorError {
     LibSqlError(LibsqlError),
     MigrationFailed(String),
     MigrationDirNotFound(PathBuf),
-    MigrationFolderAlreadyInit,
-    CustomError(String),
+    InvalidMigrationPath(PathBuf),
 }
 
 impl Display for LibsqlMigratorError {
@@ -22,9 +21,6 @@ impl Display for LibsqlMigratorError {
             LibsqlMigratorError::MigrationFailed(msg) => {
                 write!(f, "LibsqlMigrationError: Migration failed | {}", msg)
             }
-            LibsqlMigratorError::MigrationFolderAlreadyInit => {
-                write!(f, "LibsqlMigratorError: Migration Dir already initialized")
-            }
             LibsqlMigratorError::MigrationDirNotFound(path) => {
                 write!(
                     f,
@@ -32,7 +28,13 @@ impl Display for LibsqlMigratorError {
                     path.to_string_lossy()
                 )
             }
-            LibsqlMigratorError::CustomError(e) => write!(f, "LibsqlMigrationError: {}", e),
+            LibsqlMigratorError::InvalidMigrationPath(path) => {
+                write!(
+                    f,
+                    "LibsqlMigratorError: {} unsupported migration path provided",
+                    path.to_string_lossy()
+                )
+            }
         }
     }
 }
