@@ -47,6 +47,8 @@
 //!
 //! The migrator creates a `libsql_migrations` table in your database to track
 //! applied migrations.
+//!
+//! [GitHub Repository](https://github.com/prashant1k99/libsql_migration)
 
 use std::{
     fs, io,
@@ -116,6 +118,12 @@ pub async fn migrate(
     let files_to_run = check_dir_for_sql_files(migrations_folder.clone())
         .map_err(|e| LibsqlMigratorError::ErrorWhileGettingSQLFiles(e.to_string()))?;
 
+    if files_to_run.is_empty() {
+        return Ok(false);
+    };
+
+    let mut did_new_migration = false;
+
     for file in files_to_run {
         let file_id = file.strip_prefix(&migrations_folder).unwrap();
 
@@ -131,6 +139,7 @@ pub async fn migrate(
                 continue;
             }
         } else {
+            did_new_migration = true;
             conn.execute(
                 "INSERT INTO libsql_migrations (id) VALUES (?) ON CONFLICT(id) DO NOTHING",
                 libsql::params![file_id.to_str()],
@@ -156,5 +165,5 @@ pub async fn migrate(
         .await?;
     }
 
-    Ok(true)
+    Ok(did_new_migration)
 }
