@@ -45,7 +45,7 @@ ADD status BOOLEAN DEFAULT true;",
         std::fs::write(
             migration_dir.join("0004_test4.sql"),
             "ALTER TABLE test2
-ADD status boolean default true;",
+ADD status BOOLEAN default true;",
         )?; // Create an invalid file
 
         // Return both connection and temp_dir to keep the directory alive
@@ -175,13 +175,36 @@ ADD status boolean default true;",
             );
 
             assert_eq!(
+                column_info.get_key_value("Email"),
+                Some((&String::from("Email"), &String::from("TEXT")))
+            );
+
+            assert_eq!(
+                column_info.get_key_value("status"),
+                Some((&String::from("status"), &String::from("BOOLEAN")))
+            );
+
+            let mut rows = conn
+                .query("PRAGMA table_info('test2');", libsql::params![])
+                .await?;
+
+            let mut column_info: std::collections::HashMap<String, String> =
+                std::collections::HashMap::new();
+
+            while let Some(row) = rows.next().await? {
+                let name = row.get::<String>(1)?;
+                let type_name = row.get::<String>(2)?;
+                column_info.insert(name, type_name);
+            }
+
+            assert_eq!(
                 column_info.get_key_value("id"),
                 Some((&String::from("id"), &String::from("INTEGER")))
             );
 
             assert_eq!(
-                column_info.get_key_value("id"),
-                Some((&String::from("id"), &String::from("INTEGER")))
+                column_info.get_key_value("status"),
+                Some((&String::from("status"), &String::from("BOOLEAN")))
             );
 
             Ok(())
