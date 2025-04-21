@@ -123,10 +123,6 @@ ADD status BOOLEAN default true;",
 
     mod migration {
 
-        use std::fs;
-
-        use libsql::Connection;
-
         use super::super::*;
         use crate::migration_tests::setup_test_db;
 
