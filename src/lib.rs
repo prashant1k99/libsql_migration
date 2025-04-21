@@ -5,6 +5,8 @@
 //!
 //! # Usage
 //!
+//! **Note:** This crate relies on the `tokio` runtime for its asynchronous operations. Ensure `tokio` is included in your project dependencies and an appropriate runtime is available (e.g., using `#[tokio::main]`).
+//!
 //! ```no_run
 //! use libsql_migrator::{migrate, errors::LibsqlMigratorError};
 //! use libsql::Builder;
