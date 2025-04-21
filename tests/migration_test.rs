@@ -25,28 +25,28 @@ mod migration_tests {
             "CREATE TABLE test1 (
   id INTEGER PRIMARY KEY autoincrement
 );",
-        )?; // Create an invalid file
+        )?;
         std::fs::write(
             migration_dir.join("test/0001_test0.sql"),
             "CREATE TABLE test2 (
   id INTEGER PRIMARY KEY autoincrement
 );",
-        )?; // Create an invalid file
+        )?;
         std::fs::write(
             migration_dir.join("0002_est2.sql"),
             "ALTER TABLE test1
 ADD Email TEXT;",
-        )?; // Create an invalid file
+        )?;
         std::fs::write(
             migration_dir.join("0003_test3.sql"),
             "ALTER TABLE test1
 ADD status BOOLEAN DEFAULT true;",
-        )?; // Create an invalid file
+        )?;
         std::fs::write(
             migration_dir.join("0004_test4.sql"),
             "ALTER TABLE test2
 ADD status BOOLEAN default true;",
-        )?; // Create an invalid file
+        )?;
 
         // Return both connection and temp_dir to keep the directory alive
         Ok((conn, temp_dir, migration_dir))
@@ -92,7 +92,6 @@ ADD status BOOLEAN default true;",
                         "Expected MigrationDirNotFound, got {:?}",
                         e
                     );
-                    println!("Error: {:#?}", e);
                     Ok(())
                 }
             }
@@ -123,6 +122,10 @@ ADD status BOOLEAN default true;",
     }
 
     mod migration {
+
+        use std::fs;
+
+        use libsql::Connection;
 
         use super::super::*;
         use crate::migration_tests::setup_test_db;
@@ -209,11 +212,74 @@ ADD status BOOLEAN default true;",
 
             Ok(())
         }
-    }
 
-    // Test migrations
-    // 1. Test file numeric order
-    // 2. Test if the migration is successfull, then does it adds the records in migration_table
-    // 3. When migration is started again it should not run the migration on already executed
-    //    queries
+        #[tokio::test]
+        async fn test_for_changing_ran_migration_files() -> Result<(), Box<dyn std::error::Error>> {
+            let (conn, _temp_dir, migration_dir) = setup_test_db().await?;
+
+            migrate(&conn, migration_dir.clone().to_path_buf()).await?;
+
+            // Add Email field in already ran file to check it will not run already executed file
+            std::fs::write(
+                migration_dir.join("0004_test4.sql"),
+                "ALTER TABLE test2
+ADD Email TEXT;",
+            )?;
+
+            migrate(&conn, migration_dir.to_path_buf()).await?;
+
+            let mut rows = conn
+                .query("PRAGMA table_info('test2');", libsql::params![])
+                .await?;
+
+            let mut column_info: std::collections::HashMap<String, String> =
+                std::collections::HashMap::new();
+
+            while let Some(row) = rows.next().await? {
+                let name = row.get::<String>(1)?;
+                let type_name = row.get::<String>(2)?;
+                column_info.insert(name, type_name);
+            }
+
+            assert_eq!(column_info.get_key_value("Email"), None);
+
+            Ok(())
+        }
+
+        #[tokio::test]
+        async fn test_for_new_migration_files() -> Result<(), Box<dyn std::error::Error>> {
+            let (conn, _temp_dir, migration_dir) = setup_test_db().await?;
+
+            migrate(&conn, migration_dir.clone().to_path_buf()).await?;
+
+            // Add Email field in already ran file to check it will not run already executed file
+            std::fs::write(
+                migration_dir.join("0005_test4.sql"),
+                "ALTER TABLE test2
+ADD Email TEXT;",
+            )?;
+
+            migrate(&conn, migration_dir.to_path_buf()).await?;
+
+            let mut rows = conn
+                .query("PRAGMA table_info('test2');", libsql::params![])
+                .await?;
+
+            let mut column_info: std::collections::HashMap<String, String> =
+                std::collections::HashMap::new();
+
+            while let Some(row) = rows.next().await? {
+                let name = row.get::<String>(1)?;
+                let type_name = row.get::<String>(2)?;
+                column_info.insert(name, type_name);
+            }
+
+            assert_eq!(
+                column_info.get_key_value("Email"),
+                Some((&String::from("Email"), &String::from("TEXT")))
+            );
+
+            Ok(())
+        }
+    }
 }
