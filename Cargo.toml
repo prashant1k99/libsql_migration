@@ -3,9 +3,16 @@ name = "libsql_migration"
 version = "0.1.0"
 edition = "2024"
 authors = ["prashant1k99"]
+description = "A simple SQL migration tool for libsql databases"
+license = "MIT"
+repository = "https://github.com/prashant1k99/libsql_migration"
+readme = "README.md"
+keywords = ["libsql", "sqlite", "migration", "database", "sql"]
+categories = ["database", "command-line-utilities"]
 
 [dependencies]
 libsql = "0.9.4"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
 [dev-dependencies]
 tempfile = "3.10"
