@@ -1,6 +1,7 @@
 use std::{
     fs, io,
     path::{Path, PathBuf},
+    time,
 };
 
 use errors::LibsqlMigratorError;
@@ -69,9 +70,40 @@ pub async fn migrate(
     for file in files_to_run {
         let file_id = file.strip_prefix(&migrations_folder).unwrap();
 
+        let mut stmt = conn
+            .prepare("SELECT status FROM libsql_migrations WHERE id = ?;")
+            .await?;
+
+        let mut rows = stmt.query([file_id.to_str()]).await?;
+
+        if let Some(record) = rows.next().await? {
+            let status_value = record.get_value(0)?;
+            if let libsql::Value::Integer(1) = status_value {
+                continue;
+            }
+        } else {
+            conn.execute(
+                "INSERT INTO libsql_migrations (id) VALUES (?) ON CONFLICT(id) DO NOTHING",
+                libsql::params![file_id.to_str()],
+            )
+            .await?;
+        }
+
+        // Read if the .sql file is valid or not?
+        let file_data = fs::read_to_string(&file).map_err(|_| {
+            LibsqlMigratorError::ErrorWhileGettingSQLFiles(format!(
+                "Unable to read {:?} file!",
+                file_id.to_str()
+            ))
+        })?;
+
+        conn.execute(&file_data, libsql::params!()).await?;
+
         conn.execute(
-            "INSERT INTO libsql_migrations (id) VALUES (?) ON CONFLICT(id) DO NOTHING",
-            libsql::params![file_id.to_str()],
+            "UPDATE libsql_migrations SET status = true, exec_time = CURRENT_TIMESTAMP WHERE id = ?",
+            libsql::params![
+                file_id.to_str()
+            ],
         )
         .await?;
     }
