@@ -1,6 +1,6 @@
-# libsql_migrator
+# libsql_migration
 
-`libsql_migrator` provides a simple migration mechanism for libsql databases.
+`libsql_migration` provides a simple migration mechanism for libsql databases.
 
 It allows you to apply SQL migration files located in a specified directory
 to your database, keeping track of which migrations have already been applied.
@@ -10,7 +10,7 @@ to your database, keeping track of which migrations have already been applied.
 **Note:** This crate relies on the `tokio` runtime for its asynchronous operations. Ensure `tokio` is included in your project dependencies and an appropriate runtime is available (e.g., using `#[tokio::main]`).
 
 ```rust
-use libsql_migrator::{migrate, errors::LibsqlMigratorError};
+use libsql_migration::{migrate, errors::LibsqlMigratorError};
 use libsql::Builder;
 use std::path::PathBuf;
 
