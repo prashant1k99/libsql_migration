@@ -1,7 +1,9 @@
 use std::{fs, io, path::PathBuf};
 
 use crate::errors::LibsqlMigratorError;
-use crate::util;
+use crate::util::{
+    MigrationResult, create_migration_table, execute_migration, validate_migration_folder,
+};
 use libsql::Connection;
 
 fn check_dir_for_sql_files(root_path: PathBuf) -> Result<Vec<PathBuf>, io::Error> {
@@ -33,9 +35,9 @@ pub async fn migrate(
     conn: &Connection,
     migrations_folder: PathBuf,
 ) -> Result<bool, LibsqlMigratorError> {
-    util::validate_migration_folder(&migrations_folder)?;
+    validate_migration_folder(&migrations_folder)?;
 
-    util::create_migration_table(conn).await?;
+    create_migration_table(conn).await?;
 
     let files_to_run = check_dir_for_sql_files(migrations_folder.clone())
         .map_err(|e| LibsqlMigratorError::ErrorWhileGettingSQLFiles(e.to_string()))?;
@@ -49,26 +51,6 @@ pub async fn migrate(
     for file in files_to_run {
         let file_id = file.strip_prefix(&migrations_folder).unwrap();
 
-        let mut stmt = conn
-            .prepare("SELECT status FROM libsql_migrations WHERE id = ?;")
-            .await?;
-
-        let mut rows = stmt.query([file_id.to_str()]).await?;
-
-        if let Some(record) = rows.next().await? {
-            let status_value = record.get_value(0)?;
-            if let libsql::Value::Integer(1) = status_value {
-                continue;
-            }
-        } else {
-            did_new_migration = true;
-            conn.execute(
-                "INSERT INTO libsql_migrations (id) VALUES (?) ON CONFLICT(id) DO NOTHING",
-                libsql::params![file_id.to_str()],
-            )
-            .await?;
-        }
-
         let file_data = fs::read_to_string(&file).map_err(|_| {
             LibsqlMigratorError::ErrorWhileGettingSQLFiles(format!(
                 "Unable to read {:?} file!",
@@ -76,15 +58,11 @@ pub async fn migrate(
             ))
         })?;
 
-        conn.execute(&file_data, libsql::params!()).await?;
-
-        conn.execute(
-            "UPDATE libsql_migrations SET status = true, exec_time = CURRENT_TIMESTAMP WHERE id = ?",
-            libsql::params![
-                file_id.to_str()
-            ],
-        )
-        .await?;
+        if let MigrationResult::Executed =
+            execute_migration(conn, file_id.to_str().unwrap().to_string(), file_data).await?
+        {
+            did_new_migration = true
+        }
     }
 
     Ok(did_new_migration)
