@@ -21,7 +21,7 @@ tempfile = "3.10"
 tokio = { version = "1", features = ["rt"] }
 
 [features]
-default = ["dir_migrator"]
-dir_migrator = []
-string_migrator = []
-cloud_migrator = ["reqwest", "serde", "string_migrator"]
+default = ["dir"]
+dir = []
+content = []
+cloud = ["reqwest", "serde", "content"]

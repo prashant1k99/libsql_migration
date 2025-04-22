@@ -1,4 +1,4 @@
-use libsql_migration::migrate;
+use libsql_migration::dir::migrate;
 use std::path::PathBuf;
 use tempfile::tempdir;
 

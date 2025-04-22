@@ -1,0 +1,91 @@
+use std::{fs, io, path::PathBuf};
+
+use crate::errors::LibsqlMigratorError;
+use crate::util;
+use libsql::Connection;
+
+fn check_dir_for_sql_files(root_path: PathBuf) -> Result<Vec<PathBuf>, io::Error> {
+    let mut file_paths: Vec<PathBuf> = vec![];
+    let mut path_to_visit: Vec<PathBuf> = vec![root_path];
+
+    while let Some(current_path) = path_to_visit.pop() {
+        if current_path.is_dir() {
+            for entry in fs::read_dir(current_path)? {
+                let entry_path = entry?.path();
+                path_to_visit.push(entry_path);
+            }
+        } else if current_path.is_file() && current_path.extension().is_some_and(|ext| ext == "sql")
+        {
+            file_paths.push(current_path);
+        }
+    }
+
+    file_paths.sort_by(|a, b| {
+        let a_name = a.file_name().unwrap_or_default();
+        let b_name = b.file_name().unwrap_or_default();
+        a_name.cmp(b_name)
+    });
+
+    Ok(file_paths)
+}
+
+pub async fn migrate(
+    conn: &Connection,
+    migrations_folder: PathBuf,
+) -> Result<bool, LibsqlMigratorError> {
+    util::validate_migration_folder(&migrations_folder)?;
+
+    util::create_migration_table(conn).await?;
+
+    let files_to_run = check_dir_for_sql_files(migrations_folder.clone())
+        .map_err(|e| LibsqlMigratorError::ErrorWhileGettingSQLFiles(e.to_string()))?;
+
+    if files_to_run.is_empty() {
+        return Ok(false);
+    };
+
+    let mut did_new_migration = false;
+
+    for file in files_to_run {
+        let file_id = file.strip_prefix(&migrations_folder).unwrap();
+
+        let mut stmt = conn
+            .prepare("SELECT status FROM libsql_migrations WHERE id = ?;")
+            .await?;
+
+        let mut rows = stmt.query([file_id.to_str()]).await?;
+
+        if let Some(record) = rows.next().await? {
+            let status_value = record.get_value(0)?;
+            if let libsql::Value::Integer(1) = status_value {
+                continue;
+            }
+        } else {
+            did_new_migration = true;
+            conn.execute(
+                "INSERT INTO libsql_migrations (id) VALUES (?) ON CONFLICT(id) DO NOTHING",
+                libsql::params![file_id.to_str()],
+            )
+            .await?;
+        }
+
+        let file_data = fs::read_to_string(&file).map_err(|_| {
+            LibsqlMigratorError::ErrorWhileGettingSQLFiles(format!(
+                "Unable to read {:?} file!",
+                file_id.to_str()
+            ))
+        })?;
+
+        conn.execute(&file_data, libsql::params!()).await?;
+
+        conn.execute(
+            "UPDATE libsql_migrations SET status = true, exec_time = CURRENT_TIMESTAMP WHERE id = ?",
+            libsql::params![
+                file_id.to_str()
+            ],
+        )
+        .await?;
+    }
+
+    Ok(did_new_migration)
+}
