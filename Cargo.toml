@@ -11,10 +11,11 @@ keywords = ["libsql", "sqlite", "migration", "database", "sql"]
 categories = ["database", "command-line-utilities"]
 
 [dependencies]
-reqwest = { version = "0.12.15", optional = true }
+reqwest = { version = "0.12.15", optional = true, features = ["json"] }
 libsql = "0.9.4"
 serde = { version = "1.0.219", optional = true }
 tokio = { version = "1", features = ["rt"] }
+serde_json = { version = "1.0.140", optional = true }
 
 [dev-dependencies]
 tempfile = "3.10"
@@ -24,4 +25,4 @@ tokio = { version = "1", features = ["rt"] }
 default = ["dir"]
 dir = []
 content = []
-remote = ["reqwest", "serde", "content"]
+remote = ["reqwest", "serde", "serde_json", "content"]

@@ -1256,6 +1256,7 @@ dependencies = [
  "libsql",
  "reqwest",
  "serde",
+ "serde_json",
  "tempfile",
  "tokio",
 ]
