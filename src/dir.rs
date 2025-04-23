@@ -1,6 +1,6 @@
 use std::{fs, io, path::PathBuf};
 
-use crate::errors::LibsqlMigratorError;
+use crate::errors::LibsqlDirMigratorError;
 use crate::util::{
     MigrationResult, create_migration_table, execute_migration, validate_migration_folder,
 };
@@ -34,13 +34,13 @@ fn check_dir_for_sql_files(root_path: PathBuf) -> Result<Vec<PathBuf>, io::Error
 pub async fn migrate(
     conn: &Connection,
     migrations_folder: PathBuf,
-) -> Result<bool, LibsqlMigratorError> {
+) -> Result<bool, LibsqlDirMigratorError> {
     validate_migration_folder(&migrations_folder)?;
 
     create_migration_table(conn).await?;
 
     let files_to_run = check_dir_for_sql_files(migrations_folder.clone())
-        .map_err(|e| LibsqlMigratorError::ErrorWhileGettingSQLFiles(e.to_string()))?;
+        .map_err(|e| LibsqlDirMigratorError::ErrorWhileGettingSQLFiles(e.to_string()))?;
 
     if files_to_run.is_empty() {
         return Ok(false);
@@ -52,7 +52,7 @@ pub async fn migrate(
         let file_id = file.strip_prefix(&migrations_folder).unwrap();
 
         let file_data = fs::read_to_string(&file).map_err(|_| {
-            LibsqlMigratorError::ErrorWhileGettingSQLFiles(format!(
+            LibsqlDirMigratorError::ErrorWhileGettingSQLFiles(format!(
                 "Unable to read {:?} file!",
                 file_id.to_str()
             ))

@@ -8,12 +8,12 @@
 //! **Note:** This crate relies on the `tokio` runtime for its asynchronous operations. Ensure `tokio` is included in your project dependencies and an appropriate runtime is available (e.g., using `#[tokio::main]`).
 //!
 //! ```no_run
-//! use libsql_migration::{dir::migrate, errors::LibsqlMigratorError};
+//! use libsql_migration::{dir::migrate, errors::LibsqlDirMigratorError};
 //! use libsql::Builder;
 //! use std::path::PathBuf;
 //!
 //! #[tokio::main]
-//! async fn main() -> Result<(), LibsqlMigratorError> {
+//! async fn main() -> Result<(), LibsqlDirMigratorError> {
 //!     // Connect to your database
 //!     let db = Builder::new_local("my_database.db").build().await.unwrap();
 //!     let conn = db.connect().unwrap();
@@ -58,8 +58,8 @@ pub(crate) mod util;
 #[cfg(feature = "content")]
 pub mod content;
 
-#[cfg(feature = "cloud")]
-pub mod cloud;
+#[cfg(feature = "remote")]
+pub mod remote;
 
 #[cfg(feature = "dir")]
 pub mod dir;

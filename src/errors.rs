@@ -7,48 +7,89 @@ use std::{
 use libsql::Error as LibsqlError;
 
 #[derive(Debug)]
-pub enum LibsqlMigratorError {
+pub enum LibsqlMigratorBaseError {
     LibSqlError(LibsqlError),
     MigrationFailed(String),
+}
+
+#[derive(Debug)]
+pub enum LibsqlDirMigratorError {
+    BaseError(LibsqlMigratorBaseError),
     MigrationDirNotFound(PathBuf),
     InvalidMigrationPath(PathBuf),
     ErrorWhileGettingSQLFiles(String),
 }
 
-impl Display for LibsqlMigratorError {
+impl Display for LibsqlMigratorBaseError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
-            LibsqlMigratorError::LibSqlError(e) => write!(f, "LibSqlError: {}", e),
-            LibsqlMigratorError::MigrationFailed(msg) => {
+            LibsqlMigratorBaseError::LibSqlError(e) => write!(f, "LibSqlError: {}", e),
+            LibsqlMigratorBaseError::MigrationFailed(msg) => {
                 write!(f, "LibsqlMigrationError: Migration failed | {}", msg)
             }
-            LibsqlMigratorError::MigrationDirNotFound(path) => {
+        }
+    }
+}
+
+impl Display for LibsqlDirMigratorError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        match self {
+            LibsqlDirMigratorError::BaseError(e) => write!(f, "{}", e),
+            LibsqlDirMigratorError::MigrationDirNotFound(path) => {
                 write!(
                     f,
-                    "LibsqlMigratorError: {} path not found",
+                    "LibsqlDirMigratorError: {} path not found",
                     path.to_string_lossy()
                 )
             }
-            LibsqlMigratorError::InvalidMigrationPath(path) => {
+            LibsqlDirMigratorError::InvalidMigrationPath(path) => {
                 write!(
                     f,
-                    "LibsqlMigratorError: {} unsupported migration path provided",
+                    "LibsqlDirMigratorError: {} unsupported migration path provided",
                     path.to_string_lossy()
                 )
             }
-            LibsqlMigratorError::ErrorWhileGettingSQLFiles(msg) => write!(
+            LibsqlDirMigratorError::ErrorWhileGettingSQLFiles(msg) => write!(
                 f,
-                "LibsqlMigratorError: Error occured while traversing migration folder | {}",
+                "LibsqlDirMigratorError: Error occured while traversing migration folder | {}",
                 msg
             ),
         }
     }
 }
 
-impl Error for LibsqlMigratorError {}
+impl Error for LibsqlMigratorBaseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            LibsqlMigratorBaseError::LibSqlError(e) => Some(e),
+            _ => None,
+        }
+    }
+}
 
-impl From<LibsqlError> for LibsqlMigratorError {
+impl Error for LibsqlDirMigratorError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            LibsqlDirMigratorError::BaseError(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+impl From<LibsqlError> for LibsqlMigratorBaseError {
     fn from(value: LibsqlError) -> Self {
-        LibsqlMigratorError::LibSqlError(value)
+        LibsqlMigratorBaseError::LibSqlError(value)
+    }
+}
+
+impl From<LibsqlMigratorBaseError> for LibsqlDirMigratorError {
+    fn from(value: LibsqlMigratorBaseError) -> Self {
+        LibsqlDirMigratorError::BaseError(value)
+    }
+}
+
+impl From<LibsqlError> for LibsqlDirMigratorError {
+    fn from(value: LibsqlError) -> Self {
+        LibsqlDirMigratorError::BaseError(LibsqlMigratorBaseError::LibSqlError(value))
     }
 }

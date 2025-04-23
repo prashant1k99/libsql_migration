@@ -1,31 +1,33 @@
 use std::path::Path;
 
-use crate::errors::LibsqlMigratorError;
+use crate::errors::{LibsqlDirMigratorError, LibsqlMigratorBaseError};
 use libsql::Connection;
 
-pub(crate) async fn create_migration_table(conn: &Connection) -> Result<(), LibsqlMigratorError> {
+pub(crate) async fn create_migration_table(
+    conn: &Connection,
+) -> Result<(), LibsqlMigratorBaseError> {
     let sql_query = include_str!("./base_migration_table.sql");
 
     conn.execute(sql_query, libsql::params![]).await?;
     Ok(())
 }
 
-pub(crate) fn validate_migration_folder(path: &Path) -> Result<(), LibsqlMigratorError> {
+pub(crate) fn validate_migration_folder(path: &Path) -> Result<(), LibsqlDirMigratorError> {
     if !path.exists() {
-        return Err(LibsqlMigratorError::MigrationDirNotFound(
+        return Err(LibsqlDirMigratorError::MigrationDirNotFound(
             path.to_path_buf(),
         ));
     };
     if path.is_dir() || (path.is_file() && path.extension().unwrap_or_default() == "sql") {
         Ok(())
     } else {
-        Err(LibsqlMigratorError::InvalidMigrationPath(
+        Err(LibsqlDirMigratorError::InvalidMigrationPath(
             path.to_path_buf(),
         ))
     }
 }
 
-pub(crate) enum MigrationResult {
+pub enum MigrationResult {
     Executed,
     AlreadyExecuted,
 }
@@ -34,7 +36,7 @@ pub(crate) async fn execute_migration(
     conn: &Connection,
     id: String,
     sql_script: String,
-) -> Result<MigrationResult, LibsqlMigratorError> {
+) -> Result<MigrationResult, LibsqlMigratorBaseError> {
     let mut stmt = conn
         .prepare("SELECT status FROM libsql_migrations WHERE id = ?;")
         .await?;

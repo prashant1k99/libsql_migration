@@ -53,7 +53,7 @@ ADD status BOOLEAN default true;",
     }
 
     mod base {
-        use libsql_migration::errors::LibsqlMigratorError;
+        use libsql_migration::errors::LibsqlDirMigratorError;
 
         use crate::migration_tests::setup_test_db;
 
@@ -88,7 +88,7 @@ ADD status BOOLEAN default true;",
                 )),
                 Err(e) => {
                     assert!(
-                        matches!(e, LibsqlMigratorError::MigrationDirNotFound(_)),
+                        matches!(e, LibsqlDirMigratorError::MigrationDirNotFound(_)),
                         "Expected MigrationDirNotFound, got {:?}",
                         e
                     );
@@ -111,7 +111,7 @@ ADD status BOOLEAN default true;",
                 )),
                 Err(e) => {
                     assert!(
-                        matches!(e, LibsqlMigratorError::InvalidMigrationPath(_)),
+                        matches!(e, LibsqlDirMigratorError::InvalidMigrationPath(_)),
                         "Expected InvalidMigrationPath, got {:?}",
                         e
                     );
