@@ -38,6 +38,50 @@ impl Error for LibsqlMigratorBaseError {
     }
 }
 
+// LibsqlContentMigratorError
+#[cfg(feature = "content")]
+#[derive(Debug)]
+pub enum LibsqlContentMigratorError {
+    BaseError(LibsqlMigratorBaseError),
+    InvalidInput(String),
+}
+
+#[cfg(feature = "content")]
+impl Display for LibsqlContentMigratorError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        match self {
+            LibsqlContentMigratorError::BaseError(e) => write!(f, "{}", e),
+            LibsqlContentMigratorError::InvalidInput(content) => {
+                write!(f, "LibsqlContentMigratorError: Invalid Input {}", content)
+            }
+        }
+    }
+}
+
+#[cfg(feature = "content")]
+impl Error for LibsqlContentMigratorError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            LibsqlContentMigratorError::BaseError(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+#[cfg(feature = "content")]
+impl From<LibsqlMigratorBaseError> for LibsqlContentMigratorError {
+    fn from(value: LibsqlMigratorBaseError) -> Self {
+        LibsqlContentMigratorError::BaseError(value)
+    }
+}
+
+#[cfg(feature = "content")]
+impl From<LibsqlError> for LibsqlContentMigratorError {
+    fn from(value: LibsqlError) -> Self {
+        LibsqlContentMigratorError::BaseError(LibsqlMigratorBaseError::LibSqlError(value))
+    }
+}
+
 // LibsqlDirMigratorError
 #[cfg(feature = "dir")]
 #[derive(Debug)]

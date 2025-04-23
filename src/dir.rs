@@ -1,10 +1,9 @@
-use std::{fs, io, path::PathBuf};
-
 use crate::errors::LibsqlDirMigratorError;
 use crate::util::{
     MigrationResult, create_migration_table, execute_migration, validate_migration_folder,
 };
 use libsql::Connection;
+use std::{fs, io, path::PathBuf};
 
 fn check_dir_for_sql_files(root_path: PathBuf) -> Result<Vec<PathBuf>, io::Error> {
     let mut file_paths: Vec<PathBuf> = vec![];

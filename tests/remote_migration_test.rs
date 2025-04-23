@@ -14,6 +14,8 @@ mod migration_tests {
         Ok((conn, temp_dir))
     }
 
+    async fn create_server() {}
+
     mod base {
         use super::super::*;
         use crate::migration_tests::setup_test_db;
