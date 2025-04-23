@@ -14,6 +14,7 @@ type MigrationFileInfo struct {
 }
 
 func handleGetFiles(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Request ", r)
 	migrations := []MigrationFileInfo{
 		{Id: "001", Name: "Initial schema", File: "migrations/001_initial_schema.sql"},
 		{Id: "002", Name: "Add users table", File: "migrations/002_add_users_table.sql"},

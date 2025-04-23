@@ -4,25 +4,25 @@ use libsql_migration::remote::migrate;
 mod migration_tests {
     use tempfile::tempdir;
 
-    async fn setup_test_db() -> Result<libsql::Connection, Box<dyn std::error::Error>> {
+    async fn setup_test_db()
+    -> Result<(libsql::Connection, tempfile::TempDir), Box<dyn std::error::Error>> {
         let temp_dir = tempdir()?;
         let db_path = temp_dir.path().join("test.db");
         let db = libsql::Builder::new_local(db_path).build().await?;
         let conn = db.connect()?;
 
-        Ok(conn)
+        Ok((conn, temp_dir))
     }
 
     mod base {
-        use crate::migration_tests::setup_test_db;
-
         use super::super::*;
+        use crate::migration_tests::setup_test_db;
 
         #[tokio::test]
         async fn establish_connection() -> Result<(), Box<dyn std::error::Error>> {
-            let conn = setup_test_db().await?;
+            let (conn, _temp_dir) = setup_test_db().await?;
 
-            migrate(&conn, String::from("localhost::8080/")).await?;
+            migrate(&conn, String::from("http://localhost:8080")).await?;
             Ok(())
         }
     }

@@ -5,7 +5,6 @@ use libsql::Connection;
 #[derive(serde::Deserialize, Debug)]
 struct RemoteMigrationFileSchema {
     id: String,
-    name: String,
     file: String,
 }
 
@@ -17,7 +16,7 @@ async fn make_request(
         .json::<Vec<RemoteMigrationFileSchema>>()
         .await?;
 
-    files.sort_by(|a, b| a.name.cmp(&b.name));
+    files.sort_by(|a, b| a.id.cmp(&b.id));
 
     Ok(files)
 }
@@ -27,7 +26,7 @@ pub async fn migrate(conn: &Connection, url: String) -> Result<(), LibsqlRemoteM
 
     // Make a Rest request to the URL
     let all_files = make_request(url).await?;
-    println!("All files: {:?}", all_files);
+    println!("All files: {:#?}", all_files);
 
     Ok(())
 }

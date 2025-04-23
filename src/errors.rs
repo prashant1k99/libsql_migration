@@ -6,9 +6,6 @@ use std::{
 
 use libsql::Error as LibsqlError;
 
-#[cfg(feature = "remote")]
-use reqwest::Error as ReqwestError;
-
 #[derive(Debug)]
 pub enum LibsqlMigratorBaseError {
     LibSqlError(LibsqlError),
@@ -42,7 +39,6 @@ impl Error for LibsqlMigratorBaseError {
 }
 
 // LibsqlDirMigratorError
-
 #[cfg(feature = "dir")]
 #[derive(Debug)]
 pub enum LibsqlDirMigratorError {
@@ -105,6 +101,8 @@ impl From<LibsqlError> for LibsqlDirMigratorError {
 }
 
 // LibsqlRemoteMigratorError
+#[cfg(feature = "remote")]
+use reqwest::Error as ReqwestError;
 
 #[cfg(feature = "remote")]
 #[derive(Debug)]
