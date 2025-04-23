@@ -1,0 +1,2 @@
+ALTER TABLE test2
+ADD Email TEXT;
