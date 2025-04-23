@@ -1,0 +1,14 @@
+[
+  {
+    "id": "0001",
+    "url": "https://raw.githubusercontent.com/prashant1k99/libsql_migration/refs/heads/main/tests/remote-sql/0001.sql"
+  },
+  {
+    "id": "0002",
+    "url": "https://raw.githubusercontent.com/prashant1k99/libsql_migration/refs/heads/main/tests/remote-sql/0002.sql"
+  },
+  {
+    "id": "0004",
+    "url": "https://raw.githubusercontent.com/prashant1k99/libsql_migration/refs/heads/main/tests/remote-sql/0004.sql"
+  }
+]
