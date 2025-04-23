@@ -27,6 +27,7 @@ pub(crate) fn validate_migration_folder(path: &Path) -> Result<(), LibsqlDirMigr
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub enum MigrationResult {
     Executed,
     AlreadyExecuted,

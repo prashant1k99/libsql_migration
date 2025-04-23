@@ -73,11 +73,16 @@ async fn get_file_content(url: String) -> Result<String, LibsqlRemoteMigratorErr
 }
 
 pub async fn migrate(conn: &Connection, url: String) -> Result<bool, LibsqlRemoteMigratorError> {
+    if url.is_empty() {
+        return Err(LibsqlRemoteMigratorError::MigrationUrlNotValid(url));
+    }
+
     create_migration_table(conn).await?;
 
     let all_files = make_request(url).await?;
 
     let mut did_new_migration = false;
+
     for file in all_files {
         let content = get_file_content(file.url).await?;
         if let MigrationResult::Executed = execute_migration(conn, file.id, content).await? {

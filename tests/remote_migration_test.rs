@@ -14,8 +14,6 @@ mod migration_tests {
         Ok((conn, temp_dir))
     }
 
-    async fn create_server() {}
-
     mod base {
         use super::super::*;
         use crate::migration_tests::setup_test_db;
@@ -24,7 +22,17 @@ mod migration_tests {
         async fn establish_connection() -> Result<(), Box<dyn std::error::Error>> {
             let (conn, _temp_dir) = setup_test_db().await?;
 
-            migrate(&conn, String::from("http://localhost:8080")).await?;
+            migrate(&conn, String::from("https://raw.githubusercontent.com/prashant1k99/libsql_migration/refs/heads/main/tests/remote-sql/v1.json")).await?;
+
+            // Check for migrations_table
+            let mut stmt = conn
+                .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?;")
+                .await?;
+
+            let mut rows = stmt.query(["libsql_migrations"]).await?;
+
+            assert!(rows.next().await?.is_some(), "Migrations table not found");
+
             Ok(())
         }
     }

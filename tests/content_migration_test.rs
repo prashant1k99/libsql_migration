@@ -98,6 +98,8 @@ mod migration_tests {
     }
 
     mod migration {
+        use libsql_migration::util::MigrationResult;
+
         use super::super::*;
         use crate::migration_tests::setup_test_db;
 
@@ -168,7 +170,7 @@ mod migration_tests {
             )
             .await?;
 
-            migrate(
+            let res = migrate(
                 &conn,
                 "001".to_string(),
                 "ALTER TABLE test1
@@ -176,6 +178,7 @@ ADD Email TEXT;"
                     .to_string(),
             )
             .await?;
+            assert_eq!(res, MigrationResult::AlreadyExecuted);
 
             let mut rows = conn
                 .query("PRAGMA table_info('test1');", libsql::params![])

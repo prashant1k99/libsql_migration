@@ -78,7 +78,7 @@
 //! [GitHub Repository](https://github.com/prashant1k99/libsql_migration)
 
 pub mod errors;
-pub(crate) mod util;
+pub mod util;
 
 #[cfg(feature = "content")]
 pub mod content;

@@ -24,7 +24,7 @@
 //!
 //! match migrate(&conn, migration_id.clone(), migration_sql).await {
 //!     Ok(MigrationResult::Executed) => println!("Content migration '{}' applied successfully.", migration_id),
-//!     Ok(MigrationResult::Skipped) => println!("Content migration '{}' was already applied.", migration_id),
+//!     Ok(MigrationResult::AlreadyExecuted) => println!("Content migration '{}' was already applied.", migration_id),
 //!     Err(e) => eprintln!("Content migration '{}' failed: {}", migration_id, e),
 //! }
 //! # Ok(())
