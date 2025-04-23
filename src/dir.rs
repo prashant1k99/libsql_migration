@@ -1,3 +1,45 @@
+//! Provides migration capabilities using SQL files from a local directory.
+//!
+//! This module is activated by the `dir` feature (enabled by default).
+//! It finds `.sql` files in a specified directory, sorts them lexicographically,
+//! and applies them sequentially if they haven't been applied before.
+//!
+//! # Usage
+//!
+//! ```no_run
+//! # #[cfg(feature = "dir")]
+//! # async fn run() -> Result<(), Box<dyn std::error::Error>> {
+//! use libsql_migration::{dir::migrate, errors::LibsqlDirMigratorError};
+//! use libsql::Builder;
+//! use std::path::PathBuf;
+//!
+//! // Ensure the `dir` feature is enabled in Cargo.toml
+//! // [dependencies]
+//! // libsql_migration = { version = "...", features = ["dir"] } # Or keep default features
+//!
+//! let db = Builder::new_local("my_database.db").build().await.unwrap();
+//! let conn = db.connect().unwrap();
+//!
+//! // Specify the path to your migration files (e.g., ./migrations)
+//! let migrations_folder = PathBuf::from("./migrations");
+//! // Ensure this directory exists and contains files like:
+//! // - 0001_create_users.sql
+//! // - 0002_add_email_to_users.sql
+//!
+//! match migrate(&conn, migrations_folder).await {
+//!     Ok(applied) => {
+//!         if applied {
+//!             println!("Directory migrations applied successfully.");
+//!         } else {
+//!             println!("No new directory migrations to apply.");
+//!         }
+//!     }
+//!     Err(e) => eprintln!("Directory migration failed: {}", e),
+//! }
+//! # Ok(())
+//! # }
+//! ```
+
 use crate::errors::LibsqlDirMigratorError;
 use crate::util::{
     MigrationResult, create_migration_table, execute_migration, validate_migration_folder,
