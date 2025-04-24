@@ -1,6 +1,6 @@
 [package]
 name = "libsql_migration"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["prashant1k99"]
 description = "A simple SQL migration tool for libsql databases"
@@ -25,4 +25,4 @@ tokio = { version = "1", features = ["rt"] }
 default = ["dir"]
 dir = []
 content = []
-remote = ["reqwest", "serde", "serde_json", "content"]
+remote = ["reqwest", "serde", "serde_json"]
