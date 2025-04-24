@@ -215,20 +215,21 @@ migrations/
 
 ### Errors in `dir` Migrations
 
+- `BaseError`: Underlying `libsql` error.
 - `MigrationDirNotFound`: The specified directory does not exist.
 - `InvalidMigrationPath`: The provided path is not valid.
 - `ErrorWhileGettingSQLFiles`: Error occurred while traversing the folder.
 
 ### Errors in `content` Migrations
 
-- `InvalidInput`: Either `migration_id` or `migration_script` is empty.
 - `BaseError`: Underlying `libsql` error.
+- `InvalidInput`: Either `migration_id` or `migration_script` is empty.
 
 ### Errors in `remote` Migrations
 
+- `BaseError`: Underlying `libsql` error.
 - `MigrationUrlNotValid`: The provided URL is invalid.
 - `ReqwestError`: Error occurred during HTTP request.
-- `BaseError`: Underlying `libsql` error.
 
 ---
 
